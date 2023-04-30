@@ -1,0 +1,59 @@
+function [weights, num_weights] = hopfield_TSP(num_cities)
+    % Calculate number of weights required
+    num_weights = nchoosek(num_cities, 2);
+
+    % Initialize weight matrix
+    weights = zeros(num_cities);
+
+    % Calculate weights
+    k = 1;
+    for i = 1:num_cities
+        for j = i+1:num_cities
+            weights(i,j) = -1;
+            weights(j,i) = -1;
+            weights(i,i) = 0;
+            weights(j,j) = 0;
+            k = k + 1;
+        end
+    end
+end
+
+
+num_iterations = 100;
+test_patterns = [0 0 0 0 0 0 0 0 0 0;                 
+                            1 1 1 1 1 1 1 1 1 1;               
+                           0 1 0 1 0 1 0 1 0 1;               
+                           1 0 1 0 1 0 1 0 1 0;               
+                           0 0 1 1 0 0 1 1 0 0;               
+                           1 1 0 0 1 1 0 0 1 1;        
+                           1 0 0 1 0 0 1 0 0 1;       
+                           0 1 1 0 1 0 0 1 1 0;         
+                           1 1 1 0 0 1 1 1 0 0;             
+                           0 0 0 1 1 0 0 0 1 1];
+
+/* Each row represents a city and each column represents a test pattern, where 1 indicates that the city is included in the path and 0 indicates that the city is not included. The first row represents the starting city for each pattern, which is fixed in this case.
+*/
+
+function [error_tol] = test_hopfield_TSP(weights, test_patterns, num_iterations)
+    num_patterns = size(test_patterns, 2);
+    error_tol = zeros(1, num_patterns);
+
+    for i = 1:num_patterns
+        noisy_pattern = test_patterns(:,i);
+        noisy_pattern = noisy_pattern(randperm(length(noisy_pattern))); % shuffle the order of cities
+        noisy_pattern(noisy_pattern==0) = 10; % replace zeros with 10s
+
+        for j = 1:num_iterations
+            updated_pattern = sign(weights*noisy_pattern); % update the pattern
+            noisy_pattern = updated_pattern; % set the updated pattern as the new pattern
+        end
+
+        % Compute error tolerable for this pattern
+        error = sum(abs(noisy_pattern - (1:num_cities)')); % compute error
+        error_tol(i) = (num_cities - error) / num_cities; % compute error tolerable
+    end
+end
+
+
+
+
